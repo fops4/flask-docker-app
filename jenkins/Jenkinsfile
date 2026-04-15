@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    // ── Variables d'environnement ──────────────────────────────────────
+    environment {
+        // Remplacer par votre nom d'utilisateur Docker Hub
+        DOCKERHUB_USERNAME = "fops"
+        IMAGE_NAME         = "fops-flask-app"
+        IMAGE_TAG          = "latest"
+        IMAGE_FULL         = "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+        // Identifiant de la credentials Docker Hub configurée dans Jenkins
+        DOCKERHUB_CREDS    = "dockerhub-credentials"
+
+        // URL de votre dépôt GitHub
+        GITHUB_REPO        = "https://github.com/<votre_username>/flask-docker-app.git"
+        GITHUB_BRANCH      = "main"
+    }
+
+    stages {
+
+        // ── ÉTAPE 1 : Clonage ─────────────────────────────────────────
+        stage('Clonage') {
+            steps {
+                echo '📥 Clonage du dépôt GitHub...'
+                git branch: "${GITHUB_BRANCH}",
+                    url: "${GITHUB_REPO}"
+
+                echo '✅ Fichiers clonés avec succès :'
+                sh 'ls -la'
+                sh 'cat app.py'
+                sh 'cat requirements.txt'
+            }
+        }
+
+        // ── ÉTAPE 2 : Image ───────────────────────────────────────────
+        stage('Image') {
+            steps {
+                echo '🔨 Construction de l\'image Docker...'
+                sh """
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
+
+                echo '✅ Image construite avec succès :'
+                sh 'docker images | grep ${IMAGE_NAME}'
+            }
+        }
+
+        // ── ÉTAPE 3 : Publication ─────────────────────────────────────
+        stage('Publication') {
+            steps {
+                echo '🚀 Publication de l\'image sur Docker Hub...'
+                withCredentials([usernamePassword(
+                    credentialsId: "${DOCKERHUB_CREDS}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_FULL}
+
+                        docker push ${IMAGE_FULL}
+
+                        docker logout
+                    """
+                }
+                echo '✅ Image publiée : ${IMAGE_FULL}'
+            }
+        }
+    }
+
+    // ── Post-exécution ─────────────────────────────────────────────────
+    post {
+        success {
+            echo """
+            ================================================
+            ✅  PIPELINE TERMINÉ AVEC SUCCÈS
+            ================================================
+            Image disponible sur Docker Hub :
+            👉  https://hub.docker.com/r/${DOCKERHUB_USERNAME}/${IMAGE_NAME}
+            ================================================
+            """
+        }
+        failure {
+            echo '❌ Le pipeline a échoué. Vérifiez les logs ci-dessus.'
+        }
+        always {
+            // Nettoyage local de l'image après publication
+            sh """
+                docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true
+                docker rmi ${IMAGE_FULL} || true
+            """
+            cleanWs()
+        }
+    }
+}
