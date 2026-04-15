@@ -91,7 +91,8 @@ pipeline {
                 docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true
                 docker rmi ${IMAGE_FULL} || true
             """
-            cleanWs()
+            // deleteDir() remplace cleanWs() si le plugin n'est pas installé
+            deleteDir()
         }
     }
 }
