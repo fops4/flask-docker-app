@@ -4,7 +4,7 @@ pipeline {
     // ── Variables d'environnement ──────────────────────────────────────
     environment {
         // Remplacer par votre nom d'utilisateur Docker Hub
-        DOCKERHUB_USERNAME = "fops"
+        DOCKERHUB_USERNAME = "fops4"
         IMAGE_NAME         = "fops-flask-app"
         IMAGE_TAG          = "latest"
         IMAGE_FULL         = "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
@@ -13,7 +13,7 @@ pipeline {
         DOCKERHUB_CREDS    = "dockerhub-credentials"
 
         // URL de votre dépôt GitHub
-        GITHUB_REPO        = "https://github.com/<votre_username>/flask-docker-app.git"
+        GITHUB_REPO        = "https://github.com/fops4/flask-docker-app.git"
         GITHUB_BRANCH      = "main"
     }
 
