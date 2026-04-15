@@ -5,7 +5,7 @@ pipeline {
     environment {
         // Remplacer par votre nom d'utilisateur Docker Hub
         DOCKERHUB_USERNAME = "fops4"
-        IMAGE_NAME         = "fops-flask-app"
+        IMAGE_NAME         = "flask-docker-app"
         IMAGE_TAG          = "latest"
         IMAGE_FULL         = "${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
 
